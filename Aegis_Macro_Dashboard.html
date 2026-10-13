@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Macro - Enterprise Portfolio & Risk Engine</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgDark: '#0D1117',
+                        cardDark: '#161B22',
+                        cardHover: '#1C2128',
+                        accentBlue: '#2B5F8C',
+                        accentBlueLight: '#3B82F6',
+                        accentMint: '#00E6A1',
+                        accentMintHover: '#00C389',
+                        slateBorder: '#30363D',
+                        textMuted: '#8B949E'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0D1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363D;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00E6A1;
+        }
+        
+        /* Glassmorphism effects */
+        .glass-card {
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(48, 54, 61, 0.6);
+        }
+        .glass-card-glow {
+            box-shadow: 0 0 15px rgba(0, 230, 161, 0.05);
+        }
+        .glass-card-glow:hover {
+            box-shadow: 0 0 20px rgba(0, 230, 161, 0.12);
+            border-color: rgba(0, 230, 161, 0.3);
+        }
+
+        /* Pulse glowing dot */
+        .pulse-mint {
+            box-shadow: 0 0 0 0 rgba(0, 230, 161, 0.7);
+            animation: pulse-mint-anim 2s infinite;
+        }
+        @keyframes pulse-mint-anim {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 161, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 230, 161, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 161, 0); }
+        }
+    </style>
+</head>
+<body class="bg-bgDark text-gray-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-accentMint selection:text-bgDark">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="border-b border-slateBorder bg-cardDark/90 backdrop-filter backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('overview')">
+                <div class="relative w-10 h-10 flex items-center justify-center">
+                    <!-- Roman Shield SVG Logo -->
+                    <svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-[0_0_8px_rgba(0,230,161,0.3)]">
+                        <!-- Outer Shield Frame -->
+                        <path d="M50 5 L90 20 V65 C90 90 50 115 50 115 C50 115 10 90 10 65 V20 Z" fill="#161B22" stroke="#2B5F8C" stroke-width="6"/>
+                        <!-- Inner Shield Border -->
+                        <path d="M50 13 L82 25 V62 C82 82 50 103 50 103 C50 103 18 82 18 62 V25 Z" fill="#0D1117" stroke="#30363D" stroke-width="3"/>
+                        <!-- Glowing Mint Lightning Bolt -->
+                        <path d="M54 22 L32 60 H52 L44 98 L70 52 H48 Z" fill="#00E6A1" filter="drop-shadow(0px 0px 4px #00E6A1)"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="text-xl font-black tracking-wider text-white">AEGIS <span class="text-accentMint">MACRO</span></span>
+                    <span class="block text-[10px] tracking-widest text-textMuted uppercase font-semibold">Institutional Engine</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-1 bg-bgDark/80 p-1.5 rounded-xl border border-slateBorder">
+                <button onclick="switchTab('overview')" id="tab-btn-overview" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 text-accentMint bg-cardDark border border-slateBorder shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line"></i> Macro Overview
+                </button>
+                <button onclick="switchTab('risk')" id="tab-btn-risk" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wider text-textMuted hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> Risk & Correlations
+                </button>
+                <button onclick="switchTab('yield')" id="tab-btn-yield" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wider text-textMuted hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-wheat-awn"></i> Yield Mapper
+                </button>
+                <button onclick="switchTab('assets')" id="tab-btn-assets" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wider text-textMuted hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-wallet"></i> Local Asset Manager
+                </button>
+                <button onclick="switchTab('pricing')" id="tab-btn-pricing" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wider text-textMuted hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-gem text-accentMint"></i> Enterprise Plans
+                </button>
+            </nav>
+
+            <!-- Right Status & Controls -->
+            <div class="flex items-center gap-3">
+                <!-- Zero Knowledge Badge -->
+                <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-accentMint/10 border border-accentMint/30 text-accentMint text-xs font-medium cursor-pointer" onclick="openPairingModal()" title="Client-Side Encrypted Storage Active">
+                    <span class="w-2 h-2 rounded-full bg-accentMint pulse-mint"></span>
+                    <span class="text-[11px] font-mono">AES-256 Client Storage</span>
+                </div>
+
+                <!-- Currency Selector -->
+                <select id="currency-select" onchange="updateCurrencyDisplay()" class="bg-cardDark border border-slateBorder text-xs text-gray-200 font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-accentMint">
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="BTC">BTC (₿)</option>
+                </select>
+
+                <!-- Sync Device Button -->
+                <button onclick="openPairingModal()" class="p-2 bg-cardDark hover:bg-slateBorder border border-slateBorder rounded-lg text-gray-300 hover:text-white transition-colors" title="P2P WebRTC Device Sync">
+                    <i class="fa-solid fa-network-wired text-xs"></i>
+                </button>
+
+                <!-- Upgrade Button -->
+                <button onclick="switchTab('pricing')" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-accentBlue to-accentMint/80 hover:from-accentBlue hover:to-accentMint text-bgDark font-bold text-xs shadow-md transition-all">
+                    <i class="fa-solid fa-crown"></i> Enterprise
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Tabs (Horizontally Scrollable) -->
+        <div class="md:hidden flex overflow-x-auto px-4 py-2 gap-2 border-t border-slateBorder/50 bg-bgDark/95">
+            <button onclick="switchTab('overview')" class="tab-btn-m px-3 py-1.5 whitespace-nowrap rounded-lg text-xs font-semibold bg-cardDark text-accentMint border border-slateBorder">Overview</button>
+            <button onclick="switchTab('risk')" class="tab-btn-m px-3 py-1.5 whitespace-nowrap rounded-lg text-xs font-semibold text-textMuted">Risk & Matrix</button>
+            <button onclick="switchTab('yield')" class="tab-btn-m px-3 py-1.5 whitespace-nowrap rounded-lg text-xs font-semibold text-textMuted">Yield Mapper</button>
+            <button onclick="switchTab('assets')" class="tab-btn-m px-3 py-1.5 whitespace-nowrap rounded-lg text-xs font-semibold text-textMuted">Local Manager</button>
+            <button onclick="switchTab('pricing')" class="tab-btn-m px-3 py-1.5 whitespace-nowrap rounded-lg text-xs font-semibold text-textMuted">Licensing</button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: EXECUTIVE DASHBOARD (OVERVIEW) -->
+        <!-- ========================================== -->
+        <div id="view-overview" class="view-panel space-y-6">
+            
+            <!-- Executive KPI Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- KPI 1: AUM -->
+                <div class="glass-card glass-card-glow p-4 rounded-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between text-textMuted text-xs font-medium mb-1">
+                        <span>Total Portfolio AUM</span>
+                        <i class="fa-solid fa-vault text-accentBlue"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-tight text-white font-mono" id="kpi-aum">$24,850,420</div>
+                    <div class="flex items-center gap-1.5 text-accentMint text-xs font-semibold mt-2">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        <span>+4.2%</span>
+                        <span class="text-textMuted font-normal text-[11px] ml-1">vs last month</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-accentBlue to-accentMint"></div>
+                </div>
+
+                <!-- KPI 2: 24h PnL -->
+                <div class="glass-card glass-card-glow p-4 rounded-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between text-textMuted text-xs font-medium mb-1">
+                        <span>24h Un-realized PnL</span>
+                        <i class="fa-solid fa-chart-line text-accentMint"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-tight text-accentMint font-mono" id="kpi-pnl">+$312,400</div>
+                    <div class="flex items-center gap-1.5 text-accentMint text-xs font-semibold mt-2">
+                        <i class="fa-solid fa-caret-up"></i>
+                        <span>+1.27%</span>
+                        <span class="text-textMuted font-normal text-[11px] ml-1">daily alpha</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-accentMint"></div>
+                </div>
+
+                <!-- KPI 3: Value at Risk (VaR) -->
+                <div class="glass-card glass-card-glow p-4 rounded-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between text-textMuted text-xs font-medium mb-1">
+                        <span>Value at Risk (VaR 95%)</span>
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-tight text-amber-400 font-mono" id="kpi-var">$418,200</div>
+                    <div class="flex items-center gap-1.5 text-textMuted text-xs mt-2">
+                        <span>1-Day Max Drawdown Horizon</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-400/80"></div>
+                </div>
+
+                <!-- KPI 4: Sharpe Ratio -->
+                <div class="glass-card glass-card-glow p-4 rounded-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between text-textMuted text-xs font-medium mb-1">
+                        <span>Cross-Asset Sharpe</span>
+                        <i class="fa-solid fa-scale-balanced text-accentBlueLight"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-tight text-white font-mono">2.84</div>
+                    <div class="flex items-center gap-1.5 text-accentMint text-xs font-semibold mt-2">
+                        <span>Institutional Tier (&gt;2.5)</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-accentBlueLight"></div>
+                </div>
+
+                <!-- KPI 5: Macro Correlation Beta -->
+                <div class="glass-card glass-card-glow p-4 rounded-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between text-textMuted text-xs font-medium mb-1">
+                        <span>Portfolio Beta vs S&P</span>
+                        <i class="fa-solid fa-bolt text-accentMint"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-tight text-white font-mono">0.68</div>
+                    <div class="flex items-center gap-1.5 text-accentBlueLight text-xs font-semibold mt-2">
+                        <i class="fa-solid fa-shield-cat"></i>
+                        <span>Low Market Coupling</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-accentBlue"></div>
+                </div>
+            </div>
+
+            <!-- Main Performance Chart & Distribution Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Interactive Performance Multi-Line Chart -->
+                <div class="glass-card p-5 rounded-xl lg:col-span-2 flex flex-col justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-area text-accentMint"></i>
+                                Macro Performance & Benchmarks
+                            </h2>
+                            <p class="text-xs text-textMuted">Comparative equity, digital asset & macro index growth</p>
+                        </div>
+                        <!-- Controls -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="bg-bgDark p-1 rounded-lg border border-slateBorder flex text-xs">
+                                <button onclick="setChartTimeframe('1M')" class="tf-btn px-2.5 py-1 rounded-md text-textMuted hover:text-white font-medium transition-colors">1M</button>
+                                <button onclick="setChartTimeframe('6M')" class="tf-btn px-2.5 py-1 rounded-md text-accentMint bg-cardDark font-semibold shadow-sm">6M</button>
+                                <button onclick="setChartTimeframe('1Y')" class="tf-btn px-2.5 py-1 rounded-md text-textMuted hover:text-white font-medium transition-colors">1Y</button>
+                                <button onclick="setChartTimeframe('ALL')" class="tf-btn px-2.5 py-1 rounded-md text-textMuted hover:text-white font-medium transition-colors">ALL</button>
+                            </div>
+                            <div class="bg-bgDark p-1 rounded-lg border border-slateBorder flex text-xs">
+                                <button onclick="toggleBenchmark('SPX')" id="bm-spx" class="px-2 py-1 rounded text-xs font-semibold bg-accentBlue/40 text-blue-300 border border-accentBlue">S&P 500</button>
+                                <button onclick="toggleBenchmark('BTC')" id="bm-btc" class="px-2 py-1 rounded text-xs font-semibold bg-accentMint/20 text-accentMint border border-accentMint/40 ml-1">BTC</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Chart Canvas Container -->
+                    <div class="w-full h-[320px] relative">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Allocation Breakdown & Quick Stats -->
+                <div class="glass-card p-5 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-accentBlueLight"></i>
+                                Asset Allocation
+                            </h2>
+                            <span class="text-xs bg-bgDark px-2.5 py-1 rounded-md border border-slateBorder text-textMuted font-mono">4 Classes</span>
+                        </div>
+                        <!-- Donut Canvas -->
+                        <div class="w-full h-[220px] relative flex items-center justify-center">
+                            <canvas id="allocationChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Allocation Breakdown Custom Legend -->
+                    <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slateBorder text-xs">
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-bgDark/50 border border-slateBorder/50">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#2B5F8C]"></span> Equities</span>
+                            <span class="font-mono font-bold text-white">42%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-bgDark/50 border border-slateBorder/50">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#00E6A1]"></span> Crypto</span>
+                            <span class="font-mono font-bold text-white">35%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-bgDark/50 border border-slateBorder/50">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></span> Fixed Yield</span>
+                            <span class="font-mono font-bold text-white">15%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-bgDark/50 border border-slateBorder/50">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#64748B]"></span> Cash/Stables</span>
+                            <span class="font-mono font-bold text-white">8%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Asset Holdings Table -->
+            <div class="glass-card p-5 rounded-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-accentMint"></i>
+                            Live Portfolio Holdings
+                        </h2>
+                        <p class="text-xs text-textMuted">Unified view of traditional equities and digital assets</p>
+                    </div>
+                    <!-- Table Filters -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="asset-search" onkeyup="filterHoldingsTable()" placeholder="Search ticker or name..." class="bg-bgDark border border-slateBorder px-3 py-1.5 rounded-lg text-xs text-white placeholder-textMuted focus:outline-none focus:border-accentMint w-48">
+                        <select id="asset-class-filter" onchange="filterHoldingsTable()" class="bg-bgDark border border-slateBorder px-3 py-1.5 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-accentMint">
+                            <option value="ALL">All Asset Classes</option>
+                            <option value="Equities">Equities</option>
+                            <option value="Crypto">Crypto Assets</option>
+                            <option value="Fixed Income">Fixed Income</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse" id="holdings-table">
+                        <thead>
+                            <tr class="border-b border-slateBorder text-textMuted uppercase font-semibold text-[11px] tracking-wider">
+                                <th class="py-3 px-4">Asset Ticker</th>
+                                <th class="py-3 px-4">Asset Class</th>
+                                <th class="py-3 px-4">Market Price</th>
+                                <th class="py-3 px-4">Holdings Quantity</th>
+                                <th class="py-3 px-4">Total Value</th>
+                                <th class="py-3 px-4">24h Change</th>
+                                <th class="py-3 px-4">1-Day VaR</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slateBorder/50 font-mono" id="holdings-tbody">
+                            <!-- JS populated rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: RISK ENGINE & CORRELATION MATRIX -->
+        <!-- ========================================== -->
+        <div id="view-risk" class="view-panel hidden space-y-6">
+            
+            <!-- Section Title -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-accentMint"></i>
+                        Macro Risk & Correlation Matrix
+                    </h1>
+                    <p class="text-xs text-textMuted">Cross-asset correlation matrix and real-time stress testing simulator</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-textMuted">Lookback Period:</span>
+                    <select class="bg-cardDark border border-slateBorder rounded-lg px-3 py-1.5 text-xs text-white">
+                        <option>30 Days (Real-Time)</option>
+                        <option>90 Days (Quarterly)</option>
+                        <option>1 Year (Macro Cycle)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Heatmap Matrix -->
+                <div class="glass-card p-5 rounded-xl lg:col-span-7 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-border-all text-accentBlueLight"></i>
+                                Cross-Asset Correlation Heatmap
+                            </h2>
+                            <div class="flex items-center gap-2 text-[11px] text-textMuted">
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500/80 inline-block"></span> High Inverse (-1.0)</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-700 inline-block"></span> Neutral (0.0)</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-500/80 inline-block"></span> High Direct (+1.0)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Heatmap Grid Container -->
+                        <div id="heatmap-container" class="overflow-x-auto">
+                            <!-- Populated dynamically via JavaScript -->
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-textMuted mt-4 italic">
+                        * Note: High positive correlation between Crypto (BTC/ETH) and Risk Equities (NASDAQ) indicates systemic macro risk exposure.
+                    </p>
+                </div>
+
+                <!-- Scenario Stress Testing Simulator -->
+                <div class="glass-card p-5 rounded-xl lg:col-span-5 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-flask text-accentMint"></i>
+                            Macro Scenario Stress Simulator
+                        </h2>
+                        <p class="text-xs text-textMuted mb-4">Simulate portfolio impacts under aggressive macroeconomic shocks</p>
+
+                        <!-- Scenario Preset Selector -->
+                        <div class="space-y-3">
+                            <label class="text-xs font-semibold text-gray-300 block">Select Macro Shock Scenario:</label>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button onclick="applyScenario('fed_hike')" class="scenario-btn p-3 rounded-lg border border-slateBorder bg-bgDark hover:border-accentMint text-left transition-all flex items-center justify-between">
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Fed Hawkish Surprise (+50bps Rate Hike)</div>
+                                        <div class="text-[11px] text-textMuted">Bond yields spike, tech equities & crypto sell off</div>
+                                    </div>
+                                    <i class="fa-solid fa-arrow-trend-down text-red-400 text-sm"></i>
+                                </button>
+
+                                <button onclick="applyScenario('crypto_crash')" class="scenario-btn p-3 rounded-lg border border-slateBorder bg-bgDark hover:border-accentMint text-left transition-all flex items-center justify-between">
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Crypto Black Swan Liquidation (-35% BTC)</div>
+                                        <div class="text-[11px] text-textMuted">Mass leverage wipeout across DeFi & digital assets</div>
+                                    </div>
+                                    <i class="fa-solid fa-volcano text-amber-400 text-sm"></i>
+                                </button>
+
+                                <button onclick="applyScenario('stagflation')" class="scenario-btn p-3 rounded-lg border border-slateBorder bg-bgDark hover:border-accentMint text-left transition-all flex items-center justify-between">
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Stagflationary Spike (Gold +15%, DXY +5%)</div>
+                                        <div class="text-[11px] text-textMuted">Flight to traditional safety & hard commodities</div>
+                                    </div>
+                                    <i class="fa-solid fa-coins text-accentMint text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Simulation Results Dashboard -->
+                        <div class="mt-6 p-4 rounded-xl bg-bgDark border border-slateBorder space-y-3">
+                            <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Simulated Impact Analysis</div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-300">Projected Portfolio PnL:</span>
+                                <span class="font-mono font-bold text-red-400 text-sm" id="sim-pnl">-$1,842,000 (-7.41%)</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-300">Post-Shock 1-Day VaR:</span>
+                                <span class="font-mono font-bold text-amber-400 text-sm" id="sim-var">$980,500</span>
+                            </div>
+
+                            <div class="w-full bg-slateBorder/50 rounded-full h-2 overflow-hidden mt-2">
+                                <div id="sim-bar" class="bg-red-500 h-2 rounded-full transition-all duration-500" style="width: 35%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="resetScenario()" class="w-full mt-4 py-2 rounded-lg border border-slateBorder bg-cardDark hover:bg-slateBorder text-xs font-semibold text-gray-300 transition-colors">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset Simulation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: YIELD & LIQUIDITY MAPPER -->
+        <!-- ========================================== -->
+        <div id="view-yield" class="view-panel hidden space-y-6">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wheat-awn text-accentMint"></i>
+                        Yield & Liquidity Overlay Engine
+                    </h1>
+                    <p class="text-xs text-textMuted">Comparing traditional fixed income (treasuries, corporate bonds) vs decentralized finance (DeFi) yields</p>
+                </div>
+                <!-- Time Horizon Selector -->
+                <div class="flex items-center gap-2 bg-cardDark p-1.5 rounded-lg border border-slateBorder text-xs">
+                    <span class="text-textMuted px-2 font-medium">Projection Horizon:</span>
+                    <button onclick="setYieldHorizon(1)" class="yield-h-btn px-3 py-1 rounded bg-accentMint/20 text-accentMint font-semibold">1 Year</button>
+                    <button onclick="setYieldHorizon(3)" class="yield-h-btn px-3 py-1 rounded text-textMuted hover:text-white">3 Years</button>
+                    <button onclick="setYieldHorizon(5)" class="yield-h-btn px-3 py-1 rounded text-textMuted hover:text-white">5 Years</button>
+                </div>
+            </div>
+
+            <!-- Yield Overlay Comparison Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-5 rounded-xl lg:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-accentBlueLight"></i>
+                            Yield Rate Comparison (%)
+                        </h2>
+                        <span class="text-xs text-accentMint font-mono font-bold">Blended APY: 6.85%</span>
+                    </div>
+                    <div class="w-full h-[320px] relative">
+                        <canvas id="yieldChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cash Flow Projection Box -->
+                <div class="glass-card p-5 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-piggy-bank text-accentMint"></i>
+                            Yield Cash Flow Forecast
+                        </h2>
+                        <p class="text-xs text-textMuted mb-4">Projected passive yield distribution based on current portfolio weightings</p>
+
+                        <div class="space-y-4">
+                            <div class="p-3 bg-bgDark rounded-xl border border-slateBorder">
+                                <div class="text-[11px] text-textMuted">Monthly Projected Passive Cash Flow</div>
+                                <div class="text-xl font-mono font-bold text-accentMint" id="yield-monthly">$141,750 / mo</div>
+                            </div>
+
+                            <div class="p-3 bg-bgDark rounded-xl border border-slateBorder">
+                                <div class="text-[11px] text-textMuted">Annualized Expected Cash Flow</div>
+                                <div class="text-xl font-mono font-bold text-white" id="yield-annual">$1,701,000 / yr</div>
+                            </div>
+
+                            <div class="p-3 bg-bgDark rounded-xl border border-slateBorder">
+                                <div class="text-[11px] text-textMuted">Risk-Adjusted DeFi vs TradFi Yield Delta</div>
+                                <div class="text-sm font-mono font-bold text-accentBlueLight">+285 bps Outperformance</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-accentBlue/10 border border-accentBlue/30 rounded-xl flex items-center gap-3">
+                        <i class="fa-solid fa-circle-info text-accentBlueLight text-lg"></i>
+                        <span class="text-[11px] text-gray-300">DeFi yields are dynamically hedged against smart contract risk using local options parameters.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: LOCAL ASSET MANAGER (CRUD & SEC) -->
+        <!-- ========================================== -->
+        <div id="view-assets" class="view-panel hidden space-y-6">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-accentMint"></i>
+                        Decentralized Local Asset Manager
+                    </h1>
+                    <p class="text-xs text-textMuted">Zero-Knowledge Architecture: Add or modify holdings stored 100% inside your browser container</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openAddAssetModal()" class="px-4 py-2 rounded-lg bg-accentMint hover:bg-accentMintHover text-bgDark font-bold text-xs flex items-center gap-2 shadow-lg transition-all">
+                        <i class="fa-solid fa-plus"></i> Add New Position
+                    </button>
+                    <button onclick="clearAllHoldings()" class="px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-semibold text-xs transition-colors">
+                        <i class="fa-solid fa-trash-can"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zero Knowledge Security Card -->
+            <div class="p-4 rounded-xl bg-gradient-to-r from-cardDark via-bgDark to-cardDark border border-slateBorder flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-accentMint/10 border border-accentMint/30 flex items-center justify-center text-accentMint text-lg">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-white">Client-Side Isolated Storage Engine Active</div>
+                        <div class="text-[11px] text-textMuted">No portfolio API keys, positions, or balances are transmitted to central servers. Data lives strictly in IndexedDB / LocalStorage.</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold">
+                        <i class="fa-solid fa-lock mr-1"></i> AES-256 Encrypted
+                    </span>
+                </div>
+            </div>
+
+            <!-- Interactive Manager Table -->
+            <div class="glass-card p-5 rounded-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slateBorder text-textMuted uppercase font-semibold text-[11px] tracking-wider">
+                                <th class="py-3 px-4">Ticker</th>
+                                <th class="py-3 px-4">Name</th>
+                                <th class="py-3 px-4">Class</th>
+                                <th class="py-3 px-4">Unit Price</th>
+                                <th class="py-3 px-4">Amount Held</th>
+                                <th class="py-3 px-4">Total Value</th>
+                                <th class="py-3 px-4 text-right">Manage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crud-holdings-tbody" class="divide-y divide-slateBorder/50 font-mono">
+                            <!-- Dynamically injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 5: ENTERPRISE LICENSING & MONETIZATION -->
+        <!-- ========================================== -->
+        <div id="view-pricing" class="view-panel hidden space-y-6">
+            
+            <div class="text-center max-w-3xl mx-auto space-y-3 py-4">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accentMint/10 border border-accentMint/30 text-accentMint text-xs font-semibold">
+                    <i class="fa-solid fa-shield-halved"></i> Enterprise Access Rails
+                </div>
+                <h1 class="text-3xl font-black text-white tracking-tight">
+                    Institutional Tier Licensing
+                </h1>
+                <p class="text-xs sm:text-sm text-textMuted">
+                    Choose from standard term licenses or acquire a permanent perpetual license seat. Cryptographically verified on-chain or via offline license keys.
+                </p>
+
+                <!-- Duration Toggles -->
+                <div class="flex justify-center items-center gap-1 mt-6 bg-cardDark p-1.5 rounded-xl border border-slateBorder inline-flex">
+                    <button onclick="setBillingDuration(30)" id="dur-30" class="dur-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-textMuted">30 Days</button>
+                    <button onclick="setBillingDuration(90)" id="dur-90" class="dur-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-textMuted">
+                        90 Days <span class="text-[10px] text-accentMint font-mono ml-1">-10%</span>
+                    </button>
+                    <button onclick="setBillingDuration(365)" id="dur-365" class="dur-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-accentMint bg-bgDark shadow-sm">
+                        365 Days <span class="text-[10px] text-accentMint font-mono ml-1">-20%</span>
+                    </button>
+                    <button onclick="setBillingDuration('perp')" id="dur-perp" class="dur-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-textMuted">
+                        One-Time Perpetual
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pricing Cards Matrix -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto pt-4">
+                
+                <!-- Tier 1: Analyst Tier -->
+                <div class="glass-card p-6 rounded-2xl border border-slateBorder flex flex-col justify-between hover:border-accentBlue/60 transition-all">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-accentBlueLight mb-1">Analyst Tier</div>
+                        <div class="text-sm text-textMuted">Individual hedge fund analysts & family offices</div>
+                        
+                        <div class="my-6">
+                            <span class="text-3xl font-black text-white font-mono" id="price-analyst">$2,899</span>
+                            <span class="text-xs text-textMuted" id="sub-analyst">/ 365 days</span>
+                        </div>
+
+                        <ul class="space-y-3 text-xs text-gray-300 border-t border-slateBorder pt-4">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> 5 Active Local Portfolios</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Standard Macro Indicators & Correlations</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Daily VaR Analytics Engine</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Local Encrypted Storage (AES-256)</li>
+                            <li class="flex items-center gap-2 text-textMuted"><i class="fa-solid fa-xmark text-slate-500"></i> Multi-Seat P2P Encrypted Device Sync</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="openCheckoutModal('Analyst')" class="w-full mt-6 py-2.5 rounded-xl border border-slateBorder bg-cardDark hover:bg-slateBorder text-xs font-bold text-white transition-all">
+                        Select Analyst License
+                    </button>
+                </div>
+
+                <!-- Tier 2: Desk Tier (Featured) -->
+                <div class="glass-card p-6 rounded-2xl border-2 border-accentMint relative flex flex-col justify-between shadow-[0_0_25px_rgba(0,230,161,0.1)]">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accentMint text-bgDark px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        Most Popular Desk Choice
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-accentMint mb-1">Desk Tier</div>
+                        <div class="text-sm text-textMuted">Mid-sized trading desks & quantitative funds</div>
+                        
+                        <div class="my-6">
+                            <span class="text-3xl font-black text-white font-mono" id="price-desk">$8,500</span>
+                            <span class="text-xs text-textMuted" id="sub-desk">/ 365 days</span>
+                        </div>
+
+                        <ul class="space-y-3 text-xs text-gray-300 border-t border-slateBorder pt-4">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Unlimited Local Portfolios</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Full Cross-Asset Risk & Macro Heatmaps</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Real-time Scenario Stress Simulator</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> TradFi + DeFi Yield Liquidity Engine</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> P2P Encrypted Device Sync</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="openCheckoutModal('Desk')" class="w-full mt-6 py-2.5 rounded-xl bg-accentMint hover:bg-accentMintHover text-bgDark font-black text-xs transition-all shadow-lg">
+                        Select Desk License
+                    </button>
+                </div>
+
+                <!-- Tier 3: Sovereign Tier -->
+                <div class="glass-card p-6 rounded-2xl border border-slateBorder flex flex-col justify-between hover:border-accentBlue/60 transition-all">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-accentBlueLight mb-1">Sovereign Tier</div>
+                        <div class="text-sm text-textMuted">Sovereign wealth, mega funds & institutional banks</div>
+                        
+                        <div class="my-6">
+                            <span class="text-3xl font-black text-white font-mono" id="price-sovereign">$23,990</span>
+                            <span class="text-xs text-textMuted" id="sub-sovereign">/ 365 days</span>
+                        </div>
+
+                        <ul class="space-y-3 text-xs text-gray-300 border-t border-slateBorder pt-4">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> All Desk Features Included</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Custom Institutional RPC Integrations</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Multi-Seat Cryptographic Key Management</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Priority 24/7 Quantitative Desk Support</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-accentMint"></i> Air-Gapped Local Desktop Binary Runtime</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="openCheckoutModal('Sovereign')" class="w-full mt-6 py-2.5 rounded-xl border border-slateBorder bg-cardDark hover:bg-slateBorder text-xs font-bold text-white transition-all">
+                        Select Sovereign License
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slateBorder bg-cardDark/80 py-4 mt-8">
+        <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-textMuted">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-white">AEGIS MACRO</span>
+                <span>• Client-Side Decentralized Architecture v2.4</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hover:text-white cursor-pointer" onclick="openPairingModal()"><i class="fa-solid fa-shield text-accentMint mr-1"></i> Security Spec</span>
+                <span class="hover:text-white cursor-pointer" onclick="switchTab('pricing')"><i class="fa-solid fa-key mr-1"></i> License Matrix</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: ADD LOCAL ASSET MODAL -->
+    <!-- ========================================== -->
+    <div id="add-asset-modal" class="fixed inset-0 bg-bgDark/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-6 rounded-2xl border border-slateBorder space-y-4 relative">
+            <button onclick="closeAddAssetModal()" class="absolute top-4 right-4 text-textMuted hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+            
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-accentMint"></i>
+                Add Portfolio Asset Position
+            </h3>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-textMuted mb-1">Asset Ticker (e.g. NVDA, SOL)</label>
+                    <input type="text" id="input-ticker" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white font-mono focus:border-accentMint outline-none" placeholder="AAPL">
+                </div>
+
+                <div>
+                    <label class="block text-textMuted mb-1">Asset Name</label>
+                    <input type="text" id="input-name" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white focus:border-accentMint outline-none" placeholder="Apple Inc.">
+                </div>
+
+                <div>
+                    <label class="block text-textMuted mb-1">Asset Class</label>
+                    <select id="input-class" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white focus:border-accentMint outline-none">
+                        <option value="Equities">Equities</option>
+                        <option value="Crypto">Crypto</option>
+                        <option value="Fixed Income">Fixed Income</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-textMuted mb-1">Unit Price ($)</label>
+                        <input type="number" id="input-price" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white font-mono focus:border-accentMint outline-none" placeholder="185.50">
+                    </div>
+                    <div>
+                        <label class="block text-textMuted mb-1">Quantity Held</label>
+                        <input type="number" id="input-qty" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white font-mono focus:border-accentMint outline-none" placeholder="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeAddAssetModal()" class="px-4 py-2 rounded-lg border border-slateBorder text-xs font-semibold text-textMuted hover:text-white">Cancel</button>
+                <button onclick="saveNewAsset()" class="px-4 py-2 rounded-lg bg-accentMint hover:bg-accentMintHover text-bgDark text-xs font-bold">Save Position</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: WEBRTC DEVICE PAIRING MODAL -->
+    <!-- ========================================== -->
+    <div id="pairing-modal" class="fixed inset-0 bg-bgDark/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-6 rounded-2xl border border-slateBorder space-y-4 relative text-center">
+            <button onclick="closePairingModal()" class="absolute top-4 right-4 text-textMuted hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+
+            <div class="w-12 h-12 rounded-full bg-accentMint/10 border border-accentMint/30 flex items-center justify-center text-accentMint text-xl mx-auto">
+                <i class="fa-solid fa-network-wired"></i>
+            </div>
+
+            <h3 class="text-base font-bold text-white">P2P WebRTC Device Pairing</h3>
+            <p class="text-xs text-textMuted">Sync your local portfolio state directly between your desktop and mobile device. Zero centralized storage involved.</p>
+
+            <!-- Mock QR Code Box -->
+            <div class="bg-white p-4 rounded-xl inline-block my-2 shadow-inner border-2 border-accentMint">
+                <div class="w-36 h-36 bg-bgDark rounded flex items-center justify-center text-accentMint font-mono text-center p-2 text-[10px] break-all border border-slateBorder">
+                    [ Encrypted Peer Channel QR ]
+                    <br>
+                    AEGIS-P2P-89F2A1
+                </div>
+            </div>
+
+            <div class="bg-bgDark p-3 rounded-xl border border-slateBorder text-xs space-y-1 font-mono">
+                <div class="text-textMuted text-[10px]">Encrypted Channel Fingerprint</div>
+                <div class="text-accentMint truncate">0x71F9...8A90B (AES-256-GCM)</div>
+            </div>
+
+            <button onclick="closePairingModal()" class="w-full py-2 rounded-lg bg-cardDark hover:bg-slateBorder text-xs font-semibold text-white transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 3: CHECKOUT / MONETIZATION MODAL -->
+    <!-- ========================================== -->
+    <div id="checkout-modal" class="fixed inset-0 bg-bgDark/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-slateBorder space-y-5 relative">
+            <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-textMuted hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-accentMint/10 border border-accentMint/30 flex items-center justify-center text-accentMint text-lg">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white" id="modal-tier-title">Desk Tier License</h3>
+                    <p class="text-xs text-textMuted">Enterprise Cryptographic License Provisioning</p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-bgDark rounded-xl border border-slateBorder flex items-center justify-between font-mono">
+                <div>
+                    <div class="text-xs text-textMuted">Selected Duration: <span id="modal-duration-label" class="text-white">365 Days</span></div>
+                    <div class="text-xs text-textMuted">Total Due:</div>
+                </div>
+                <div class="text-2xl font-black text-accentMint" id="modal-total-price">$8,500</div>
+            </div>
+
+            <!-- Payment Method Tabs -->
+            <div class="space-y-3">
+                <label class="text-xs font-semibold text-gray-300">Select Settlement Rail:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="pay-rail-card" onclick="setPayRail('card')" class="p-3 rounded-xl border border-accentMint bg-cardDark text-xs font-bold text-white flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-credit-card text-accentMint"></i> Credit Card / Stripe
+                    </button>
+                    <button id="pay-rail-web3" onclick="setPayRail('web3')" class="p-3 rounded-xl border border-slateBorder bg-bgDark text-xs font-bold text-textMuted hover:text-white flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-ethereum text-accentBlueLight"></i> Web3 Crypto (USDC)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card Mock Fields -->
+            <div id="card-pay-fields" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-textMuted mb-1">Corporate Cardholder Name</label>
+                    <input type="text" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white focus:border-accentMint outline-none" placeholder="Aegis Capital Fund LP">
+                </div>
+                <div>
+                    <label class="block text-textMuted mb-1">Card Number</label>
+                    <input type="text" class="w-full bg-bgDark border border-slateBorder rounded-lg px-3 py-2 text-white font-mono focus:border-accentMint outline-none" placeholder="•••• •••• •••• 4242">
+                </div>
+            </div>
+
+            <!-- Web3 Mock Fields -->
+            <div id="web3-pay-fields" class="space-y-3 text-xs hidden">
+                <div class="p-3 bg-bgDark rounded-xl border border-slateBorder font-mono text-[11px] space-y-1">
+                    <div class="text-textMuted">Deposit ERC-20 / Solana USDC Address:</div>
+                    <div class="text-accentMint break-all">0x89F2A1902C812701B48109312A309F0129B</div>
+                </div>
+            </div>
+
+            <button onclick="processMockPayment()" class="w-full py-3 rounded-xl bg-accentMint hover:bg-accentMintHover text-bgDark font-black text-xs shadow-lg transition-all">
+                Complete Enterprise Settlement
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <!-- ========================================== -->
+    <script>
+        // -------------------------------------------------------------
+        // DEFAULT INITIAL STATE (IN-MEMORY / LOCAL STORAGE)
+        // -------------------------------------------------------------
+        let portfolioHoldings = [
+            { id: 1, ticker: 'NVDA', name: 'NVIDIA Corp', class: 'Equities', price: 128.50, qty: 35000, var: 3.2 },
+            { id: 2, ticker: 'BTC', name: 'Bitcoin', class: 'Crypto', price: 67420.00, qty: 145, var: 5.8 },
+            { id: 3, ticker: 'ETH', name: 'Ethereum', class: 'Crypto', price: 3480.00, qty: 1200, var: 6.1 },
+            { id: 4, ticker: 'AAPL', name: 'Apple Inc', class: 'Equities', price: 214.20, qty: 22000, var: 2.1 },
+            { id: 5, ticker: 'UST-10Y', name: 'US 10yr Treasury', class: 'Fixed Income', price: 98.40, qty: 37000, var: 0.8 },
+            { id: 6, ticker: 'SOL', name: 'Solana', class: 'Crypto', price: 142.80, qty: 15000, var: 8.4 }
+        ];
+
+        let selectedCurrency = 'USD';
+        let currencyRates = { USD: 1, EUR: 0.92, BTC: 0.000015 };
+        let currencySymbols = { USD: '$', EUR: '€', BTC: '₿' };
+
+        let selectedDuration = 365; // 30, 90, 365, 'perp'
+        let selectedTier = 'Desk';
+
+        // Chart instances
+        let perfChart, allocChart, yieldChartInstance;
+
+        // -------------------------------------------------------------
+        // APPLICATION INITIALIZATION
+        // -------------------------------------------------------------
+        window.onload = function() {
+            renderHoldingsTable();
+            renderCrudHoldingsTable();
+            initPerformanceChart();
+            initAllocationChart();
+            initCorrelationHeatmap();
+            initYieldChart();
+            updateCurrencyDisplay();
+        };
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Hide all views
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+            // Show selected view
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            // Style nav buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-accentMint', 'bg-cardDark', 'border', 'border-slateBorder', 'shadow-sm');
+                btn.classList.add('text-textMuted');
+            });
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.add('text-accentMint', 'bg-cardDark', 'border', 'border-slateBorder', 'shadow-sm');
+                activeBtn.classList.remove('text-textMuted');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // CURRENCY CONVERSION & KPI UPDATE
+        // -------------------------------------------------------------
+        function updateCurrencyDisplay() {
+            selectedCurrency = document.getElementById('currency-select').value;
+            const rate = currencyRates[selectedCurrency];
+            const sym = currencySymbols[selectedCurrency];
+
+            const rawAUM = 24850420 * rate;
+            const rawPnL = 312400 * rate;
+            const rawVaR = 418200 * rate;
+
+            document.getElementById('kpi-aum').innerText = `${sym}${formatNumber(rawAUM)}`;
+            document.getElementById('kpi-pnl').innerText = `+${sym}${formatNumber(rawPnL)}`;
+            document.getElementById('kpi-var').innerText = `${sym}${formatNumber(rawVaR)}`;
+
+            renderHoldingsTable();
+        }
+
+        function formatNumber(num) {
+            if(selectedCurrency === 'BTC') return num.toFixed(3);
+            return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        }
+
+        // -------------------------------------------------------------
+        // HOLDINGS TABLES RENDERING
+        // -------------------------------------------------------------
+        function renderHoldingsTable() {
+            const tbody = document.getElementById('holdings-tbody');
+            if(!tbody) return;
+
+            const rate = currencyRates[selectedCurrency];
+            const sym = currencySymbols[selectedCurrency];
+            const filterText = (document.getElementById('asset-search')?.value || '').toLowerCase();
+            const filterClass = document.getElementById('asset-class-filter')?.value || 'ALL';
+
+            tbody.innerHTML = '';
+
+            portfolioHoldings.forEach(item => {
+                if(filterClass !== 'ALL' && item.class !== filterClass) return;
+                if(filterText && !item.ticker.toLowerCase().includes(filterText) && !item.name.toLowerCase().includes(filterText)) return;
+
+                const val = item.price * item.qty * rate;
+                const priceFormatted = (item.price * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const valFormatted = val.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-cardHover/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full ${item.class==='Crypto'?'bg-accentMint':'bg-accentBlue'}"></span>
+                        ${item.ticker}
+                        <span class="text-[10px] text-textMuted font-normal hidden sm:inline">(${item.name})</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-textMuted">${item.class}</td>
+                    <td class="py-3.5 px-4 text-white">${sym}${priceFormatted}</td>
+                    <td class="py-3.5 px-4 text-gray-300">${item.qty.toLocaleString()}</td>
+                    <td class="py-3.5 px-4 text-white font-bold">${sym}${valFormatted}</td>
+                    <td class="py-3.5 px-4 text-accentMint">+${(Math.random()*3 + 0.5).toFixed(2)}%</td>
+                    <td class="py-3.5 px-4 text-amber-400">${item.var}%</td>
+                    <td class="py-3.5 px-4 text-right">
+                        <button onclick="removeHolding(${item.id})" class="text-textMuted hover:text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterHoldingsTable() {
+            renderHoldingsTable();
+        }
+
+        function renderCrudHoldingsTable() {
+            const tbody = document.getElementById('crud-holdings-tbody');
+            if(!tbody) return;
+
+            tbody.innerHTML = '';
+            portfolioHoldings.forEach(item => {
+                const totalVal = (item.price * item.qty).toLocaleString('en-US', { maximumFractionDigits: 0 });
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-cardHover/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-bold text-white">${item.ticker}</td>
+                    <td class="py-3.5 px-4 text-textMuted">${item.name}</td>
+                    <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-cardDark border border-slateBorder text-gray-300">${item.class}</span></td>
+                    <td class="py-3.5 px-4 text-white">$${item.price.toLocaleString()}</td>
+                    <td class="py-3.5 px-4 text-gray-300">${item.qty.toLocaleString()}</td>
+                    <td class="py-3.5 px-4 text-accentMint font-bold">$${totalVal}</td>
+                    <td class="py-3.5 px-4 text-right">
+                        <button onclick="removeHolding(${item.id})" class="px-2.5 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function removeHolding(id) {
+            portfolioHoldings = portfolioHoldings.filter(h => h.id !== id);
+            renderHoldingsTable();
+            renderCrudHoldingsTable();
+        }
+
+        function clearAllHoldings() {
+            portfolioHoldings = [];
+            renderHoldingsTable();
+            renderCrudHoldingsTable();
+        }
+
+        // -------------------------------------------------------------
+        // CHART.JS CHARTS CONFIGURATION
+        // -------------------------------------------------------------
+        function initPerformanceChart() {
+            const ctx = document.getElementById('performanceChart')?.getContext('2d');
+            if(!ctx) return;
+
+            const gradientPortfolio = ctx.createLinearGradient(0, 0, 0, 300);
+            gradientPortfolio.addColorStop(0, 'rgba(0, 230, 161, 0.25)');
+            gradientPortfolio.addColorStop(1, 'rgba(0, 230, 161, 0.0)');
+
+            perfChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [
+                        {
+                            label: 'Aegis Macro Portfolio',
+                            data: [100, 108, 105, 118, 124, 120, 132, 138, 145, 152],
+                            borderColor: '#00E6A1',
+                            borderWidth: 3,
+                            backgroundColor: gradientPortfolio,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'S&P 500 Index',
+                            data: [100, 102, 101, 104, 107, 106, 110, 112, 114, 116],
+                            borderColor: '#2B5F8C',
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            fill: false,
+                            tension: 0.2,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Bitcoin Benchmark',
+                            data: [100, 115, 110, 130, 122, 118, 140, 150, 142, 168],
+                            borderColor: '#3B82F6',
+                            borderWidth: 1.5,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' },
+                            ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' },
+                            ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initAllocationChart() {
+            const ctx = document.getElementById('allocationChart')?.getContext('2d');
+            if(!ctx) return;
+
+            allocChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Equities', 'Crypto', 'Fixed Yield', 'Cash/Stables'],
+                    datasets: [{
+                        data: [42, 35, 15, 8],
+                        backgroundColor: ['#2B5F8C', '#00E6A1', '#3B82F6', '#64748B'],
+                        borderWidth: 2,
+                        borderColor: '#161B22'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function setChartTimeframe(tf) {
+            if(!perfChart) return;
+            // Mock timeframe shift
+            if(tf === '1M') perfChart.data.labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            else if(tf === '6M') perfChart.data.labels = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+            else perfChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+            perfChart.update();
+        }
+
+        // -------------------------------------------------------------
+        // HEATMAP CORRELATION MATRIX ENGINE
+        // -------------------------------------------------------------
+        function initCorrelationHeatmap() {
+            const assets = ['SPX', 'NDX', 'DXY', 'GOLD', 'BTC', 'ETH', 'SOL'];
+            const matrix = [
+                [ 1.00,  0.88, -0.65,  0.12,  0.42,  0.45,  0.38], // SPX
+                [ 0.88,  1.00, -0.72,  0.08,  0.58,  0.60,  0.52], // NDX
+                [-0.65, -0.72,  1.00, -0.45, -0.52, -0.48, -0.41], // DXY
+                [ 0.12,  0.08, -0.45,  1.00,  0.25,  0.22,  0.18], // GOLD
+                [ 0.42,  0.58, -0.52,  0.25,  1.00,  0.84,  0.76], // BTC
+                [ 0.45,  0.60, -0.48,  0.22,  0.84,  1.00,  0.81], // ETH
+                [ 0.38,  0.52, -0.41,  0.18,  0.76,  0.81,  1.00]  // SOL
+            ];
+
+            const container = document.getElementById('heatmap-container');
+            if(!container) return;
+
+            let html = '<table class="w-full text-center text-xs border-collapse"><thead><tr><th></th>';
+            assets.forEach(a => {
+                html += `<th class="p-2 text-textMuted font-mono font-bold">${a}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            for(let i=0; i<assets.length; i++) {
+                html += `<tr><td class="p-2 font-mono font-bold text-textMuted text-left">${assets[i]}</td>`;
+                for(let j=0; j<assets.length; j++) {
+                    const val = matrix[i][j];
+                    let bgColor = 'bg-slate-800';
+                    let textColor = 'text-gray-300';
+
+                    if(val === 1.0) {
+                        bgColor = 'bg-slate-700/50';
+                        textColor = 'text-textMuted';
+                    } else if(val > 0.5) {
+                        bgColor = 'bg-red-500/30 border border-red-500/40';
+                        textColor = 'text-red-300';
+                    } else if(val < -0.4) {
+                        bgColor = 'bg-emerald-500/30 border border-emerald-500/40';
+                        textColor = 'text-emerald-300';
+                    }
+
+                    html += `<td class="p-2"><div class="${bgColor} ${textColor} p-2 rounded-lg font-mono font-bold">${val > 0 ? '+'+val.toFixed(2) : val.toFixed(2)}</div></td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+
+            container.innerHTML = html;
+        }
+
+        // Stress Scenario Logic
+        function applyScenario(type) {
+            const pnlEl = document.getElementById('sim-pnl');
+            const varEl = document.getElementById('sim-var');
+            const barEl = document.getElementById('sim-bar');
+
+            if(type === 'fed_hike') {
+                pnlEl.innerText = '-$1,842,000 (-7.41%)';
+                varEl.innerText = '$980,500';
+                barEl.className = 'bg-red-500 h-2 rounded-full transition-all duration-500';
+                barEl.style.width = '65%';
+            } else if(type === 'crypto_crash') {
+                pnlEl.innerText = '-$3,105,000 (-12.49%)';
+                varEl.innerText = '$1,420,000';
+                barEl.className = 'bg-red-600 h-2 rounded-full transition-all duration-500';
+                barEl.style.width = '90%';
+            } else if(type === 'stagflation') {
+                pnlEl.innerText = '+$420,000 (+1.69%)';
+                varEl.innerText = '$310,000';
+                barEl.className = 'bg-accentMint h-2 rounded-full transition-all duration-500';
+                barEl.style.width = '20%';
+            }
+        }
+
+        function resetScenario() {
+            document.getElementById('sim-pnl').innerText = '-$0 (0.00%)';
+            document.getElementById('sim-var').innerText = '$418,200';
+            document.getElementById('sim-bar').style.width = '10%';
+        }
+
+        // -------------------------------------------------------------
+        // YIELD MAPPER ENGINE
+        // -------------------------------------------------------------
+        function initYieldChart() {
+            const ctx = document.getElementById('yieldChart')?.getContext('2d');
+            if(!ctx) return;
+
+            yieldChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['US 10Y Treasury', 'Corp Investment Grade', 'Aave USDC Staking', 'ETH Staking APY', 'Solana DeFi Liquidity'],
+                    datasets: [{
+                        label: 'Annual Yield Rate (%)',
+                        data: [4.25, 5.40, 8.10, 3.80, 11.20],
+                        backgroundColor: ['#2B5F8C', '#3B82F6', '#00E6A1', '#00C389', '#10B981'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#8B949E', font: { family: 'Inter', size: 10 } } },
+                        y: { ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function setYieldHorizon(years) {
+            const monthly = 141750 * years;
+            const annual = 1701000 * years;
+            document.getElementById('yield-monthly').innerText = `$${(monthly).toLocaleString()} / ${years}y factor`;
+            document.getElementById('yield-annual').innerText = `$${(annual).toLocaleString()} / total`;
+        }
+
+        // -------------------------------------------------------------
+        // ENTERPRISE MONETIZATION & PRICING MATRICES
+        // -------------------------------------------------------------
+        function setBillingDuration(dur) {
+            selectedDuration = dur;
+            
+            document.querySelectorAll('.dur-btn').forEach(b => {
+                b.classList.remove('text-accentMint', 'bg-bgDark', 'shadow-sm');
+                b.classList.add('text-textMuted');
+            });
+
+            // Highlight selected button
+            const activeDurBtn = document.getElementById(`dur-${dur}`);
+            if(activeDurBtn) {
+                activeDurBtn.classList.add('text-accentMint', 'bg-bgDark', 'shadow-sm');
+                activeDurBtn.classList.remove('text-textMuted');
+            }
+
+            // Update prices dynamically
+            const priceAnalyst = document.getElementById('price-analyst');
+            const priceDesk = document.getElementById('price-desk');
+            const priceSovereign = document.getElementById('price-sovereign');
+
+            const subAnalyst = document.getElementById('sub-analyst');
+            const subDesk = document.getElementById('sub-desk');
+            const subSovereign = document.getElementById('sub-sovereign');
+
+            if(dur === 30) {
+                priceAnalyst.innerText = '$299'; subAnalyst.innerText = '/ 30 days';
+                priceDesk.innerText = '$899'; subDesk.innerText = '/ 30 days';
+                priceSovereign.innerText = '$2,499'; subSovereign.innerText = '/ 30 days';
+            } else if(dur === 90) {
+                priceAnalyst.innerText = '$799'; subAnalyst.innerText = '/ 90 days';
+                priceDesk.innerText = '$2,399'; subDesk.innerText = '/ 90 days';
+                priceSovereign.innerText = '$6,699'; subSovereign.innerText = '/ 90 days';
+            } else if(dur === 365) {
+                priceAnalyst.innerText = '$2,899'; subAnalyst.innerText = '/ 365 days';
+                priceDesk.innerText = '$8,500'; subDesk.innerText = '/ 365 days';
+                priceSovereign.innerText = '$23,990'; subSovereign.innerText = '/ 365 days';
+            } else if(dur === 'perp') {
+                priceAnalyst.innerText = '$7,500'; subAnalyst.innerText = 'one-time perpetual';
+                priceDesk.innerText = '$22,000'; subDesk.innerText = 'one-time perpetual';
+                priceSovereign.innerText = '$60,000'; subSovereign.innerText = 'one-time perpetual';
+            }
+        }
+
+        // -------------------------------------------------------------
+        // MODALS HANDLERS
+        // -------------------------------------------------------------
+        function openAddAssetModal() { document.getElementById('add-asset-modal').classList.remove('hidden'); }
+        function closeAddAssetModal() { document.getElementById('add-asset-modal').classList.add('hidden'); }
+
+        function saveNewAsset() {
+            const ticker = document.getElementById('input-ticker').value || 'NEW';
+            const name = document.getElementById('input-name').value || 'Custom Asset';
+            const assetClass = document.getElementById('input-class').value || 'Equities';
+            const price = parseFloat(document.getElementById('input-price').value) || 100;
+            const qty = parseFloat(document.getElementById('input-qty').value) || 10;
+
+            portfolioHoldings.push({
+                id: Date.now(),
+                ticker: ticker.toUpperCase(),
+                name: name,
+                class: assetClass,
+                price: price,
+                qty: qty,
+                var: 3.5
+            });
+
+            renderHoldingsTable();
+            renderCrudHoldingsTable();
+            closeAddAssetModal();
+        }
+
+        function openPairingModal() { document.getElementById('pairing-modal').classList.remove('hidden'); }
+        function closePairingModal() { document.getElementById('pairing-modal').classList.add('hidden'); }
+
+        function openCheckoutModal(tier) {
+            selectedTier = tier;
+            document.getElementById('modal-tier-title').innerText = `${tier} Tier License`;
+            document.getElementById('modal-duration-label').innerText = selectedDuration === 'perp' ? 'One-Time Perpetual' : `${selectedDuration} Days`;
+            
+            // Calculate modal total
+            let priceStr = '$8,500';
+            if(tier === 'Analyst') {
+                if(selectedDuration === 30) priceStr = '$299';
+                if(selectedDuration === 90) priceStr = '$799';
+                if(selectedDuration === 365) priceStr = '$2,899';
+                if(selectedDuration === 'perp') priceStr = '$7,500';
+            } else if(tier === 'Desk') {
+                if(selectedDuration === 30) priceStr = '$899';
+                if(selectedDuration === 90) priceStr = '$2,399';
+                if(selectedDuration === 365) priceStr = '$8,500';
+                if(selectedDuration === 'perp') priceStr = '$22,000';
+            } else if(tier === 'Sovereign') {
+                if(selectedDuration === 30) priceStr = '$2,499';
+                if(selectedDuration === 90) priceStr = '$6,699';
+                if(selectedDuration === 365) priceStr = '$23,990';
+                if(selectedDuration === 'perp') priceStr = '$60,000';
+            }
+
+            document.getElementById('modal-total-price').innerText = priceStr;
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() { document.getElementById('checkout-modal').classList.add('hidden'); }
+
+        function setPayRail(rail) {
+            const cardBtn = document.getElementById('pay-rail-card');
+            const web3Btn = document.getElementById('pay-rail-web3');
+
+            const cardFields = document.getElementById('card-pay-fields');
+            const web3Fields = document.getElementById('web3-pay-fields');
+
+            if(rail === 'card') {
+                cardBtn.className = "p-3 rounded-xl border border-accentMint bg-cardDark text-xs font-bold text-white flex items-center justify-center gap-2";
+                web3Btn.className = "p-3 rounded-xl border border-slateBorder bg-bgDark text-xs font-bold text-textMuted hover:text-white flex items-center justify-center gap-2";
+                cardFields.classList.remove('hidden');
+                web3Fields.classList.add('hidden');
+            } else {
+                web3Btn.className = "p-3 rounded-xl border border-accentMint bg-cardDark text-xs font-bold text-white flex items-center justify-center gap-2";
+                cardBtn.className = "p-3 rounded-xl border border-slateBorder bg-bgDark text-xs font-bold text-textMuted hover:text-white flex items-center justify-center gap-2";
+                web3Fields.classList.remove('hidden');
+                cardFields.classList.add('hidden');
+            }
+        }
+
+        function processMockPayment() {
+            alert(`Cryptographic License Key Provisioned for ${selectedTier} Tier (${selectedDuration} Days). Aegis Shield Active.`);
+            closeCheckoutModal();
+        }
+    </script>
+</body>
+</html>
